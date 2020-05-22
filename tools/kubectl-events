@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+#
+# kube-events is a utility to list events of given resources
+
+[[ -n $DEBUG ]] && set -x
+
+SELF="kubectl events"
+
+list_events() {
+  kubectl get events --sort-by=.metadata.creationTimestamp
+}
+
+list_given_events() {
+  kubectl get events --sort-by=.metadata.creationTimestamp | grep "${1}"
+}
+
+list_given_events_reversed() {
+  kubectl get events --sort-by=.metadata.creationTimestamp | grep "${1}" | sort -r
+}
+
+usage() {
+  cat <<EOF
+USAGE:
+  $SELF                    : list all events in current namespace
+  $SELF <RESOURCE_NAME>    : list all events of given resource
+  $SELF -r <RESOURCE_NAME> : list all events of given resource in reverse order
+  $SELF -h,--help          : show this message
+EOF
+}
+
+main() {
+  if [[ "$#" -eq 0 ]]; then
+      list_events
+  elif [[ "$#" -eq 1 ]]; then
+    if [[ "${1}" == '-h' || "${1}" == '--help' ]]; then
+      usage
+    elif [[ "${1}" =~ ^-(.*) ]]; then
+      echo "error: unrecognized flag \"${1}\"" >&2
+      usage
+      exit 1
+    else
+      list_given_events "${1}"
+    fi
+  elif [[ "$#" -eq 2 ]]; then
+    if [[ "${1}" == '-r' ]]; then
+      list_given_events_reversed "${2}"
+    else
+      echo "error: unrecognized flag \"${1}\"" >&2
+      usage
+      exit 1
+    fi
+  else
+    echo "error: too many flags" >&2
+    usage
+    exit 1
+  fi
+}
+
+main "$@"

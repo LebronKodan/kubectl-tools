@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+#
+# kube-context is a utility to change current context
+
+[[ -n $DEBUG ]] && set -x
+
+SELF="kubectl context"
+
+list_contexts() {
+  kubectl config get-contexts
+}
+
+usage() {
+  cat <<EOF
+USAGE:
+  $SELF                    : list all contexts in config file
+  $SELF <CONTEXT_NAME>     : enter the given context
+  $SELF -h,--help          : show this message
+EOF
+}
+
+main() {
+  if [[ "$#" -eq 0 ]]; then
+      list_contexts
+  elif [[ "$#" -eq 1 ]]; then
+    if [[ "${1}" == '-h' || "${1}" == '--help' ]]; then
+      usage
+    elif [[ "${1}" =~ ^-(.*) ]]; then
+      echo "error: unrecognized flag \"${1}\"" >&2
+      usage
+      exit 1
+    else
+      kubectl config use-context "${1}"
+    fi
+  else
+    echo "error: too many flags" >&2
+    usage
+    exit 1
+  fi
+}
+
+main "$@"

@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+#
+# kube-enter is a utility to enter the interactive bash of a pod
+
+[[ -n $DEBUG ]] && set -x
+
+SELF="kubectl enter"
+
+list_pods() {
+  kubectl get po
+}
+
+usage() {
+  cat <<EOF
+USAGE:
+  $SELF                    : list the pods in the current namespace
+  $SELF <POD_NAME>         : enter the given pod
+  $SELF -h,--help          : show this message
+EOF
+}
+
+main() {
+  if [[ "$#" -eq 0 ]]; then
+      list_pods
+  elif [[ "$#" -eq 1 ]]; then
+    if [[ "${1}" == '-h' || "${1}" == '--help' ]]; then
+      usage
+    elif [[ "${1}" =~ ^-(.*) ]]; then
+      echo "error: unrecognized flag \"${1}\"" >&2
+      usage
+      exit 1
+    else
+      kubectl exec -it "${1}" -- "/bin/bash"
+    fi
+  else
+    echo "error: too many flags" >&2
+    usage
+    exit 1
+  fi
+}
+
+main "$@"
